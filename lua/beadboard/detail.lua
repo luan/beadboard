@@ -255,7 +255,7 @@ local function setup_keymaps(buf)
     local idx = status_index[s.bead.status] or 1
     local next = status_cycle[(idx % #status_cycle) + 1]
     mutate_and_refresh(buf, s.bead_id, { 'update', s.bead_id, '--status', next })
-  end, opts)
+  end, vim.tbl_extend('force', opts, { desc = 'Cycle status forward' }))
 
   -- Status pick
   vim.keymap.set('n', 'S', function()
@@ -265,7 +265,7 @@ local function setup_keymaps(buf)
       if not choice then return end
       mutate_and_refresh(buf, s.bead_id, { 'update', s.bead_id, '--status', choice })
     end)
-  end, opts)
+  end, vim.tbl_extend('force', opts, { desc = 'Pick status' }))
 
   -- Priority cycle up
   vim.keymap.set('n', 'p', function()
@@ -274,7 +274,7 @@ local function setup_keymaps(buf)
     local cur = s.bead.priority or 4
     local next = (cur - 1) % 5
     mutate_and_refresh(buf, s.bead_id, { 'update', s.bead_id, '--priority', tostring(next) })
-  end, opts)
+  end, vim.tbl_extend('force', opts, { desc = 'Priority up' }))
 
   -- Priority cycle down
   vim.keymap.set('n', 'P', function()
@@ -283,28 +283,28 @@ local function setup_keymaps(buf)
     local cur = s.bead.priority or 0
     local next = (cur + 1) % 5
     mutate_and_refresh(buf, s.bead_id, { 'update', s.bead_id, '--priority', tostring(next) })
-  end, opts)
+  end, vim.tbl_extend('force', opts, { desc = 'Priority down' }))
 
   -- Close
   vim.keymap.set('n', 'c', function()
     local s = state()
     if not s then return end
     mutate_and_refresh(buf, s.bead_id, { 'close', s.bead_id })
-  end, opts)
+  end, vim.tbl_extend('force', opts, { desc = 'Close bead' }))
 
   -- Reopen
   vim.keymap.set('n', 'o', function()
     local s = state()
     if not s then return end
     mutate_and_refresh(buf, s.bead_id, { 'reopen', s.bead_id })
-  end, opts)
+  end, vim.tbl_extend('force', opts, { desc = 'Reopen bead' }))
 
   -- Claim
   vim.keymap.set('n', 'gK', function()
     local s = state()
     if not s then return end
     mutate_and_refresh(buf, s.bead_id, { 'update', s.bead_id, '--claim' })
-  end, opts)
+  end, vim.tbl_extend('force', opts, { desc = 'Claim bead' }))
 
   -- Assignee
   vim.keymap.set('n', 'a', function()
@@ -314,7 +314,7 @@ local function setup_keymaps(buf)
       if not val or val == '' then return end
       mutate_and_refresh(buf, s.bead_id, { 'update', s.bead_id, '--assignee', val })
     end)
-  end, opts)
+  end, vim.tbl_extend('force', opts, { desc = 'Set assignee' }))
 
   -- Add label
   vim.keymap.set('n', 'gl', function()
@@ -338,7 +338,7 @@ local function setup_keymaps(buf)
         end
       end)
     end)
-  end, opts)
+  end, vim.tbl_extend('force', opts, { desc = 'Add label' }))
 
   -- Remove label
   vim.keymap.set('n', 'gL', function()
@@ -348,7 +348,7 @@ local function setup_keymaps(buf)
       if not val or val == '' then return end
       mutate_and_refresh(buf, s.bead_id, { 'update', s.bead_id, '--remove-label', val })
     end)
-  end, opts)
+  end, vim.tbl_extend('force', opts, { desc = 'Remove label' }))
 
   -- Add comment
   vim.keymap.set('n', '<C-c>', function()
@@ -358,15 +358,15 @@ local function setup_keymaps(buf)
       if not text or text == '' then return end
       mutate_and_refresh(buf, s.bead_id, { 'comments', 'add', s.bead_id, text })
     end)
-  end, opts)
+  end, vim.tbl_extend('force', opts, { desc = 'Add comment' }))
 
   -- Field editing via scratch buffer
   local edit_fields = {
-    { key = 'ed', field = 'description' },
-    { key = 'eD', field = 'design' },
-    { key = 'en', field = 'notes' },
-    { key = 'ea', field = 'acceptance' },
-    { key = 'et', field = 'title' },
+    { key = 'ed', field = 'description', desc = 'Edit description' },
+    { key = 'eD', field = 'design', desc = 'Edit design' },
+    { key = 'en', field = 'notes', desc = 'Edit notes' },
+    { key = 'ea', field = 'acceptance', desc = 'Edit acceptance' },
+    { key = 'et', field = 'title', desc = 'Edit title' },
   }
   for _, f in ipairs(edit_fields) do
     vim.keymap.set('n', f.key, function()
@@ -376,7 +376,7 @@ local function setup_keymaps(buf)
       require('beadboard.edit').open(s.bead_id, f.field, current, function()
         refresh_detail(buf, s.bead_id)
       end)
-    end, opts)
+    end, vim.tbl_extend('force', opts, { desc = f.desc }))
   end
 
   -- Show dependencies picker
@@ -396,7 +396,7 @@ local function setup_keymaps(buf)
         require('beadboard.detail').open(choice)
       end
     end)
-  end, opts)
+  end, vim.tbl_extend('force', opts, { desc = 'Show dependencies' }))
 
   -- Dep add: current issue depends on target
   vim.keymap.set('n', 'da', function()
@@ -407,7 +407,7 @@ local function setup_keymaps(buf)
       if not target then return end
       mutate_and_refresh(buf, s.bead_id, { 'dep', 'add', s.bead_id, target })
     end)
-  end, opts)
+  end, vim.tbl_extend('force', opts, { desc = 'Add dependency' }))
 
   -- Dep blocks: current issue blocks target
   vim.keymap.set('n', 'db', function()
@@ -418,7 +418,7 @@ local function setup_keymaps(buf)
       if not target then return end
       mutate_and_refresh(buf, s.bead_id, { 'dep', s.bead_id, '--blocks', target })
     end)
-  end, opts)
+  end, vim.tbl_extend('force', opts, { desc = 'Add blocker' }))
 
   -- Dep remove: select from existing deps
   vim.keymap.set('n', 'dr', function()
@@ -446,7 +446,7 @@ local function setup_keymaps(buf)
       local target = id_map[choice]
       mutate_and_refresh(buf, s.bead_id, { 'dep', 'remove', s.bead_id, target })
     end)
-  end, opts)
+  end, vim.tbl_extend('force', opts, { desc = 'Remove dependency' }))
 
   -- Dep relate: bidirectional relates_to link
   vim.keymap.set('n', 'dR', function()
@@ -457,7 +457,7 @@ local function setup_keymaps(buf)
       if not target then return end
       mutate_and_refresh(buf, s.bead_id, { 'dep', 'relate', s.bead_id, target })
     end)
-  end, opts)
+  end, vim.tbl_extend('force', opts, { desc = 'Relate to issue' }))
 
   -- Dep unrelate: remove relates_to link from existing deps
   vim.keymap.set('n', 'dU', function()
@@ -485,7 +485,7 @@ local function setup_keymaps(buf)
       local target = id_map[choice]
       mutate_and_refresh(buf, s.bead_id, { 'dep', 'unrelate', s.bead_id, target })
     end)
-  end, opts)
+  end, vim.tbl_extend('force', opts, { desc = 'Unrelate issue' }))
 
   -- Go to parent
   vim.keymap.set('n', 'gp', function()
@@ -495,14 +495,14 @@ local function setup_keymaps(buf)
       return
     end
     require('beadboard.detail').open(s.bead.parent)
-  end, opts)
+  end, vim.tbl_extend('force', opts, { desc = 'Go to parent' }))
 
   -- Show children
   vim.keymap.set('n', 'gc', function()
     local s = state()
     if not s or not s.bead then return end
     require('beadboard.list').open_with_mode('children', s.bead_id)
-  end, opts)
+  end, vim.tbl_extend('force', opts, { desc = 'Show children' }))
 
   -- Defer
   vim.keymap.set('n', 'gD', function()
@@ -522,14 +522,14 @@ local function setup_keymaps(buf)
         refresh_detail(buf, s.bead_id)
       end)
     end)
-  end, opts)
+  end, vim.tbl_extend('force', opts, { desc = 'Defer bead' }))
 
   -- Undefer
   vim.keymap.set('n', 'gU', function()
     local s = state()
     if not s then return end
     mutate_and_refresh(buf, s.bead_id, { 'update', s.bead_id, '--status', 'open' })
-  end, opts)
+  end, vim.tbl_extend('force', opts, { desc = 'Undefer bead' }))
 
   -- Edit due date
   vim.keymap.set('n', 'eU', function()
@@ -539,7 +539,7 @@ local function setup_keymaps(buf)
       if val == nil then return end
       mutate_and_refresh(buf, s.bead_id, { 'update', s.bead_id, '--due', val })
     end)
-  end, opts)
+  end, vim.tbl_extend('force', opts, { desc = 'Edit due date' }))
 
   -- Edit estimate
   vim.keymap.set('n', 'eE', function()
@@ -549,7 +549,7 @@ local function setup_keymaps(buf)
       if not val or val == '' then return end
       mutate_and_refresh(buf, s.bead_id, { 'update', s.bead_id, '--estimate', val })
     end)
-  end, opts)
+  end, vim.tbl_extend('force', opts, { desc = 'Edit estimate' }))
 
   -- Set parent
   vim.keymap.set('n', 'gP', function()
@@ -560,14 +560,14 @@ local function setup_keymaps(buf)
       if not target then return end
       mutate_and_refresh(buf, s.bead_id, { 'update', s.bead_id, '--parent', target })
     end)
-  end, opts)
+  end, vim.tbl_extend('force', opts, { desc = 'Set parent' }))
 
   -- Dependency graph
   vim.keymap.set('n', 'gG', function()
     local s = state()
     if not s then return end
     require('beadboard.graph').open(s.bead_id)
-  end, opts)
+  end, vim.tbl_extend('force', opts, { desc = 'Dependency graph' }))
 
   -- Mark as duplicate of another issue
   vim.keymap.set('n', 'gx', function()
@@ -578,7 +578,7 @@ local function setup_keymaps(buf)
       if not target then return end
       mutate_and_refresh(buf, s.bead_id, { 'duplicate', s.bead_id, '--of', target })
     end)
-  end, opts)
+  end, vim.tbl_extend('force', opts, { desc = 'Mark as duplicate' }))
 
   -- Supersede with another issue
   vim.keymap.set('n', 'gX', function()
@@ -589,7 +589,7 @@ local function setup_keymaps(buf)
       if not target then return end
       mutate_and_refresh(buf, s.bead_id, { 'supersede', s.bead_id, '--with', target })
     end)
-  end, opts)
+  end, vim.tbl_extend('force', opts, { desc = 'Supersede with issue' }))
 
   -- Rename issue ID
   vim.keymap.set('n', 'eI', function()
@@ -607,7 +607,7 @@ local function setup_keymaps(buf)
         refresh_detail(buf, new_id)
       end)
     end)
-  end, opts)
+  end, vim.tbl_extend('force', opts, { desc = 'Rename issue ID' }))
 
   -- Promote wisp to permanent bead
   vim.keymap.set('n', 'gW', function()
@@ -621,21 +621,21 @@ local function setup_keymaps(buf)
       end
       mutate_and_refresh(buf, s.bead_id, args)
     end)
-  end, opts)
+  end, vim.tbl_extend('force', opts, { desc = 'Promote wisp' }))
 
   -- Claude skill picker
   vim.keymap.set('n', 'gC', function()
     local s = state()
     if not s then return end
     require('beadboard.claude').pick_and_run(s.bead or s.bead_id)
-  end, opts)
+  end, vim.tbl_extend('force', opts, { desc = 'Claude skill picker' }))
 
   -- Jump to active Claude session
   vim.keymap.set('n', 'gT', function()
     local s = state()
     if not s then return end
     require('beadboard.claude').focus(s.bead_id)
-  end, opts)
+  end, vim.tbl_extend('force', opts, { desc = 'Jump to Claude' }))
 
   -- Help
   vim.keymap.set('n', '?', function()

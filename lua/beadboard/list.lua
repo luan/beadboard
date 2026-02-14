@@ -149,7 +149,7 @@ local function setup_keymaps(buf)
 
   vim.keymap.set('n', 'R', function()
     refresh(buf)
-  end, opts)
+  end, vim.tbl_extend('force', opts, { desc = 'Refresh' }))
 
   vim.keymap.set('n', '<CR>', function()
     local bead = get_bead_under_cursor(buf)
@@ -160,7 +160,7 @@ local function setup_keymaps(buf)
 
   vim.keymap.set('n', 'q', function()
     vim.api.nvim_buf_delete(buf, { force = true })
-  end, opts)
+  end, vim.tbl_extend('force', opts, { desc = 'Close buffer' }))
 
   -- Status cycle forward
   vim.keymap.set('n', 's', function()
@@ -169,7 +169,7 @@ local function setup_keymaps(buf)
     local idx = status_index[bead.status] or 1
     local next = status_cycle[(idx % #status_cycle) + 1]
     mutate_and_refresh(buf, { 'update', bead.id, '--status', next })
-  end, opts)
+  end, vim.tbl_extend('force', opts, { desc = 'Cycle status forward' }))
 
   -- Status pick
   vim.keymap.set('n', 'S', function()
@@ -179,7 +179,7 @@ local function setup_keymaps(buf)
       if not choice then return end
       mutate_and_refresh(buf, { 'update', bead.id, '--status', choice })
     end)
-  end, opts)
+  end, vim.tbl_extend('force', opts, { desc = 'Pick status' }))
 
   -- Priority cycle up (lower number = higher priority)
   vim.keymap.set('n', 'p', function()
@@ -188,7 +188,7 @@ local function setup_keymaps(buf)
     local cur = bead.priority or 4
     local next = (cur - 1) % 5
     mutate_and_refresh(buf, { 'update', bead.id, '--priority', tostring(next) })
-  end, opts)
+  end, vim.tbl_extend('force', opts, { desc = 'Priority up' }))
 
   -- Priority cycle down (higher number = lower priority)
   vim.keymap.set('n', 'P', function()
@@ -197,35 +197,35 @@ local function setup_keymaps(buf)
     local cur = bead.priority or 0
     local next = (cur + 1) % 5
     mutate_and_refresh(buf, { 'update', bead.id, '--priority', tostring(next) })
-  end, opts)
+  end, vim.tbl_extend('force', opts, { desc = 'Priority down' }))
 
   -- Close
   vim.keymap.set('n', 'c', function()
     local bead = get_bead_under_cursor(buf)
     if not bead then return end
     mutate_and_refresh(buf, { 'close', bead.id })
-  end, opts)
+  end, vim.tbl_extend('force', opts, { desc = 'Close bead' }))
 
   -- Reopen
   vim.keymap.set('n', 'o', function()
     local bead = get_bead_under_cursor(buf)
     if not bead then return end
     mutate_and_refresh(buf, { 'reopen', bead.id })
-  end, opts)
+  end, vim.tbl_extend('force', opts, { desc = 'Reopen bead' }))
 
   -- Claim
   vim.keymap.set('n', 'gK', function()
     local bead = get_bead_under_cursor(buf)
     if not bead then return end
     mutate_and_refresh(buf, { 'update', bead.id, '--claim' })
-  end, opts)
+  end, vim.tbl_extend('force', opts, { desc = 'Claim bead' }))
 
   -- Create
   vim.keymap.set('n', 'C', function()
     require('beadboard.create').open(function()
       refresh(buf)
     end)
-  end, opts)
+  end, vim.tbl_extend('force', opts, { desc = 'Create bead' }))
 
   -- Delete with confirmation
   vim.keymap.set('n', 'dd', function()
@@ -235,7 +235,7 @@ local function setup_keymaps(buf)
       if choice ~= 'Yes' then return end
       mutate_and_refresh(buf, { 'delete', bead.id })
     end)
-  end, opts)
+  end, vim.tbl_extend('force', opts, { desc = 'Delete bead' }))
 
   -- Filter
   vim.keymap.set('n', 'f', function()
@@ -315,26 +315,26 @@ local function setup_keymaps(buf)
         end
       end
     )
-  end, opts)
+  end, vim.tbl_extend('force', opts, { desc = 'Filter' }))
 
   -- Clear all filters
   vim.keymap.set('n', 'F', function()
     filter.clear(buf)
     refresh(buf)
-  end, opts)
+  end, vim.tbl_extend('force', opts, { desc = 'Clear filters' }))
 
   -- Sort
   vim.keymap.set('n', 'gs', function()
     vim.ui.select(sort_fields, { prompt = 'Sort by:' }, function(v)
       if v then filter.get(buf).sort = v; refresh(buf) end
     end)
-  end, opts)
+  end, vim.tbl_extend('force', opts, { desc = 'Sort by field' }))
 
   -- Reverse sort
   vim.keymap.set('n', 'gS', function()
     filter.get(buf).reverse = not filter.get(buf).reverse
     refresh(buf)
-  end, opts)
+  end, vim.tbl_extend('force', opts, { desc = 'Reverse sort' }))
 
   -- Search
   vim.keymap.set('n', '/', function()
@@ -346,7 +346,7 @@ local function setup_keymaps(buf)
         refresh(buf)
       end
     end)
-  end, opts)
+  end, vim.tbl_extend('force', opts, { desc = 'Text search' }))
 
   -- Query
   vim.keymap.set('n', 'gq', function()
@@ -358,7 +358,7 @@ local function setup_keymaps(buf)
         refresh(buf)
       end
     end)
-  end, opts)
+  end, vim.tbl_extend('force', opts, { desc = 'Query expression' }))
 
   -- Defer
   vim.keymap.set('n', 'gD', function()
@@ -378,14 +378,14 @@ local function setup_keymaps(buf)
         refresh(buf)
       end)
     end)
-  end, opts)
+  end, vim.tbl_extend('force', opts, { desc = 'Defer bead' }))
 
   -- Undefer
   vim.keymap.set('n', 'gU', function()
     local bead = get_bead_under_cursor(buf)
     if not bead then return end
     mutate_and_refresh(buf, { 'update', bead.id, '--status', 'open' })
-  end, opts)
+  end, vim.tbl_extend('force', opts, { desc = 'Undefer bead' }))
 
   -- Visual-mode bulk close
   vim.keymap.set('x', 'c', function()
@@ -398,7 +398,7 @@ local function setup_keymaps(buf)
       if choice ~= 'Yes' then return end
       bulk_mutate(buf, beads, function(bead) return { 'close', bead.id } end)
     end)
-  end, opts)
+  end, vim.tbl_extend('force', opts, { desc = 'Bulk close selected' }))
 
   -- Visual-mode bulk delete
   vim.keymap.set('x', 'dd', function()
@@ -411,7 +411,7 @@ local function setup_keymaps(buf)
       if choice ~= 'Yes' then return end
       bulk_mutate(buf, beads, function(bead) return { 'delete', bead.id } end)
     end)
-  end, opts)
+  end, vim.tbl_extend('force', opts, { desc = 'Bulk delete selected' }))
 
   -- Visual-mode bulk defer
   vim.keymap.set('x', 'gD', function()
@@ -424,7 +424,7 @@ local function setup_keymaps(buf)
       if choice ~= 'Yes' then return end
       bulk_mutate(buf, beads, function(bead) return { 'defer', bead.id } end)
     end)
-  end, opts)
+  end, vim.tbl_extend('force', opts, { desc = 'Bulk defer selected' }))
 
   -- Visual-mode bulk status update
   vim.keymap.set('x', 's', function()
@@ -437,14 +437,14 @@ local function setup_keymaps(buf)
       if not choice then return end
       bulk_mutate(buf, beads, function(bead) return { 'update', bead.id, '--status', choice } end)
     end)
-  end, opts)
+  end, vim.tbl_extend('force', opts, { desc = 'Bulk status update' }))
 
   -- Claude skill picker
   vim.keymap.set('n', 'gC', function()
     local bead = get_bead_under_cursor(buf)
     if not bead then return end
     require('beadboard.claude').pick_and_run(bead)
-  end, opts)
+  end, vim.tbl_extend('force', opts, { desc = 'Claude skill picker' }))
 
   -- Visual-mode Claude skill picker (multi-bead)
   vim.keymap.set('x', 'gC', function()
@@ -454,7 +454,7 @@ local function setup_keymaps(buf)
     local beads = get_beads_in_range(buf, start_row, end_row)
     if #beads == 0 then return end
     require('beadboard.claude').pick_and_run_multi(beads)
-  end, opts)
+  end, vim.tbl_extend('force', opts, { desc = 'Claude skill picker' }))
 
   -- Help
   vim.keymap.set('n', '?', function()

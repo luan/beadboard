@@ -42,11 +42,11 @@ function M.open(issue_id)
 
   vim.keymap.set('n', 'q', function()
     vim.api.nvim_buf_delete(buf, { force = true })
-  end, opts)
+  end, vim.tbl_extend('force', opts, { desc = 'Close buffer' }))
 
   vim.keymap.set('n', 'R', function()
     refresh()
-  end, opts)
+  end, vim.tbl_extend('force', opts, { desc = 'Refresh' }))
 
   vim.keymap.set('n', '<CR>', function()
     local line = vim.api.nvim_get_current_line()
@@ -63,7 +63,7 @@ function M.open(issue_id)
         require('beadboard.detail').open(id)
       end
     end
-  end, opts)
+  end, vim.tbl_extend('force', opts, { desc = 'Open issue' }))
 
   vim.keymap.set('n', '?', function()
     require('beadboard.help').open()

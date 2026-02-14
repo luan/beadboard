@@ -136,11 +136,11 @@ function M.open()
   vim.keymap.set('n', 'q', function()
     stop_timer(buf)
     vim.api.nvim_buf_delete(buf, { force = true })
-  end, opts)
+  end, vim.tbl_extend('force', opts, { desc = 'Close buffer' }))
 
   vim.keymap.set('n', 'R', function()
     refresh(buf)
-  end, opts)
+  end, vim.tbl_extend('force', opts, { desc = 'Refresh' }))
 
   vim.keymap.set('n', '<CR>', function()
     local line = vim.api.nvim_get_current_line()
@@ -148,7 +148,7 @@ function M.open()
     if id then
       require('beadboard.detail').open(id)
     end
-  end, opts)
+  end, vim.tbl_extend('force', opts, { desc = 'Open issue' }))
 
   vim.keymap.set('n', 'a', function()
     auto_refresh = not auto_refresh
@@ -159,7 +159,7 @@ function M.open()
       stop_timer(buf)
       vim.notify('beadboard: auto-refresh OFF')
     end
-  end, opts)
+  end, vim.tbl_extend('force', opts, { desc = 'Toggle auto-refresh' }))
 
   vim.keymap.set('n', '?', function()
     require('beadboard.help').open()

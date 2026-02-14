@@ -208,11 +208,11 @@ function M.open()
 
   vim.keymap.set('n', 'q', function()
     vim.api.nvim_buf_delete(buf, { force = true })
-  end, { buffer = buf, nowait = true, silent = true })
+  end, { buffer = buf, nowait = true, silent = true, desc = 'Close buffer' })
 
   vim.keymap.set('n', 'R', function()
     refresh(buf)
-  end, { buffer = buf, nowait = true, silent = true })
+  end, { buffer = buf, nowait = true, silent = true, desc = 'Refresh' })
 
   refresh(buf)
 end

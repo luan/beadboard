@@ -71,7 +71,7 @@ local function open_description_buf(callback)
       vim.api.nvim_buf_delete(buf, { force = true })
       callback(nil)
     end
-  end, { buffer = buf, nowait = true, silent = true })
+  end, { buffer = buf, nowait = true, silent = true, desc = 'Close without saving' })
 end
 
 -- Run the sequential create wizard, then call on_done() on success.
