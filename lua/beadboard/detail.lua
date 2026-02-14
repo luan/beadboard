@@ -235,18 +235,23 @@ local function setup_keymaps(buf)
     return buf_state[buf]
   end
 
-  vim.keymap.set('n', 'q', function()
-    vim.api.nvim_buf_delete(buf, { force = true })
-  end, opts)
+  local function go_back()
+    local s = state()
+    local source = s and s.source_buf
+    if source and vim.api.nvim_buf_is_valid(source) then
+      vim.api.nvim_set_current_buf(source)
+    else
+      vim.api.nvim_buf_delete(buf, { force = true })
+    end
+  end
 
-  vim.keymap.set('n', '<BS>', function()
-    vim.api.nvim_buf_delete(buf, { force = true })
-  end, opts)
+  vim.keymap.set('n', 'q', go_back, vim.tbl_extend('force', opts, { desc = 'Back to list' }))
+  vim.keymap.set('n', '<BS>', go_back, vim.tbl_extend('force', opts, { desc = 'Back to list' }))
 
   vim.keymap.set('n', 'R', function()
     local s = state()
     if s then refresh_detail(buf, s.bead_id) end
-  end, opts)
+  end, vim.tbl_extend('force', opts, { desc = 'Refresh' }))
 
   -- Status cycle forward
   vim.keymap.set('n', 's', function()
@@ -664,7 +669,7 @@ function M.should_refresh(buf)
   return data[1].updated_at ~= state.bead.updated_at
 end
 
-function M.open(bead_id)
+function M.open(bead_id, source_buf, bead)
   local buf = vim.api.nvim_create_buf(false, true)
 
   vim.bo[buf].buftype = 'nofile'
@@ -672,7 +677,7 @@ function M.open(bead_id)
   vim.bo[buf].swapfile = false
   vim.bo[buf].filetype = 'beadboard-detail'
 
-  buf_state[buf] = { bead_id = bead_id }
+  buf_state[buf] = { bead_id = bead_id, source_buf = source_buf, bead = bead }
 
   vim.api.nvim_create_autocmd('BufWipeout', {
     buffer = buf,
@@ -684,10 +689,9 @@ function M.open(bead_id)
   vim.api.nvim_set_current_buf(buf)
   setup_keymaps(buf)
 
-  -- Loading message
-  vim.bo[buf].modifiable = true
-  vim.api.nvim_buf_set_lines(buf, 0, -1, false, { '[beadboard] Loading ' .. bead_id .. '...' })
-  vim.bo[buf].modifiable = false
+  if bead then
+    render(buf, bead, nil, nil)
+  end
 
   refresh_detail(buf, bead_id)
 end
