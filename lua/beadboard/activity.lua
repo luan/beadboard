@@ -162,8 +162,8 @@ function M.open()
   end, vim.tbl_extend('force', opts, { desc = 'Toggle auto-refresh' }))
 
   vim.keymap.set('n', '?', function()
-    require('beadboard.help').open()
-  end, opts)
+    require('beadboard.help').toggle()
+  end, vim.tbl_extend('force', opts, { desc = 'Show help' }))
 
   vim.api.nvim_create_autocmd('BufWipeout', {
     buffer = buf,

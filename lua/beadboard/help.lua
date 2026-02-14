@@ -1,162 +1,363 @@
 local M = {}
 
 local ns = vim.api.nvim_create_namespace('beadboard_help')
+local filetype = 'beadboard_help'
 
-local separator = string.rep('\u{2500}', 32)
+local function _has_snacks_win()
+  local ok, snacks = pcall(require, 'snacks')
+  return ok and snacks.win and type(snacks.win) == 'table'
+end
 
-local content = {
-  'beadboard.nvim — Keybinding Reference',       -- 0
-  '',                                              -- 1
-  'LIST BUFFER',                                   -- 2
-  separator,                                       -- 3
-  '<CR>     Open bead detail',                     -- 4
-  'R        Refresh',                              -- 5
-  'q        Close buffer',                         -- 6
-  's        Cycle status forward',                 -- 7
-  'S        Pick status',                          -- 8
-  'p        Priority up (higher)',                 -- 9
-  'P        Priority down (lower)',                -- 10
-  'c        Close bead',                           -- 11
-  'o        Reopen bead',                          -- 12
-  'gK       Claim bead',                           -- 13
-  'C        Create new bead (wizard)',             -- 14
-  'dd       Delete bead',                          -- 15
-  'gD       Defer bead (optional until date)',     -- 16
-  'gU       Undefer bead (reopen)',                -- 17
-  'f        Filter by dimension',                  -- 18
-  '           status, type, priority, assignee, label,',  -- 19
-  '           label-any, created-after, created-before,', -- 20
-  '           updated-after, updated-before,',     -- 21
-  '           show-all, empty-description',        -- 22
-  'F        Clear all filters',                    -- 23
-  'gs       Sort by field',                        -- 24
-  'gS       Reverse sort',                         -- 25
-  '/        Text search',                          -- 26
-  'gq       Query expression',                     -- 27
-  'gC       Claude skill picker',                  -- 28
-  '',                                              -- 29
-  'LIST BUFFER (visual mode)',                     -- 30
-  separator,                                       -- 30
-  'V+c      Bulk close selected',                  -- 31
-  'V+dd     Bulk delete selected',                 -- 32
-  'V+gD     Bulk defer selected',                  -- 33
-  'V+s      Bulk status update selected',          -- 34
-  'V+gC     Claude skill picker (multi-bead)',     -- 35
-  '',                                              -- 35
-  'DETAIL BUFFER',                                 -- 36
-  separator,                                       -- 37
-  'q / <BS> Back to list',                         -- 38
-  'R        Refresh',                              -- 39
-  's / S    Status cycle / pick',                  -- 40
-  'p / P    Priority up / down',                   -- 41
-  'c        Close bead',                           -- 42
-  'o        Reopen bead',                          -- 43
-  'gK       Claim bead',                           -- 44
-  'a        Set assignee',                         -- 45
-  'gl       Add label (picker + custom)',          -- 46
-  'gL       Remove label',                         -- 47
-  '<C-c>    Add comment',                          -- 48
-  'gD       Defer bead (optional until date)',     -- 49
-  'gU       Undefer bead (reopen)',                -- 50
-  'ed       Edit description',                     -- 51
-  'eD       Edit design',                          -- 52
-  'en       Edit notes',                           -- 53
-  'ea       Edit acceptance',                      -- 54
-  'et       Edit title',                           -- 55
-  'eU       Edit due date',                        -- 56
-  'eE       Edit estimate (minutes)',              -- 57
-  'eI       Rename issue ID',                      -- 58
-  'gP       Set parent (picker)',                  -- 59
-  'gd       Show dependencies',                    -- 60
-  'gp       Go to parent',                         -- 61
-  'gc       Show children',                        -- 62
-  'gG       Dependency graph',                     -- 63
-  'gx       Mark as duplicate',                    -- 64
-  'gX       Supersede with issue',                 -- 65
-  'gW       Promote wisp to bead',                 -- 66
-  'da       Add dependency (depends on)',          -- 67
-  'db       Add blocking dep (this blocks)',       -- 68
-  'dr       Remove dependency',                    -- 69
-  'dR       Relate to issue',                      -- 70
-  'dU       Unrelate from issue',                  -- 71
-  'gC       Claude skill picker',                  -- 72
-  'gT       Jump to active Claude session',        -- 73
-  '',                                              -- 72
-  'ACTIVITY BUFFER',                               -- 73
-  separator,                                       -- 74
-  '<CR>     Open issue under cursor',              -- 75
-  'R        Refresh',                              -- 76
-  'a        Toggle auto-refresh (10s)',            -- 77
-  'q        Close buffer',                         -- 78
-  '?        Show help',                            -- 79
-  '',                                              -- 80
-  'GRAPH BUFFER',                                  -- 81
-  separator,                                       -- 82
-  '<CR>     Open issue under cursor',              -- 83
-  'R        Refresh',                              -- 84
-  'q        Close buffer',                         -- 85
-  '?        Show help',                            -- 86
-  '',                                              -- 87
-  'EDIT BUFFER',                                   -- 88
-  separator,                                       -- 89
-  ':w       Save changes',                         -- 90
-  'q        Close without saving',                 -- 91
-  '',                                              -- 92
-  'COMMANDS',                                      -- 93
-  separator,                                       -- 94
-  ':Beadboard        Open list',                   -- 95
-  ':BdSearch <term>  Search beads',                -- 96
-  ':BdQuery <expr>   Query beads',                 -- 97
-  ':BdReady          Show ready beads',            -- 98
-  ':BdBlocked        Show blocked beads',          -- 99
-  ':BdStale [days]   Show stale beads',            -- 100
-  ':BdCreate         Create bead (wizard)',        -- 101
-  ':BdStatus         Project dashboard',           -- 102
-  ':BdEpicStatus     Epic progress',               -- 103
-  ':BdGraph [id]     Dependency graph',            -- 104
-  ':BdActivity       Activity feed',               -- 105
+-- Curated keymap sections. Each section: { title, { {lhs, desc}, ... } }
+-- Kept static because beadboard keymaps lack desc fields.
+local sections = {
+  {
+    'List',
+    {
+      { '<CR>', 'Open bead detail' },
+      { 'R', 'Refresh' },
+      { 'q', 'Close buffer' },
+      { 's', 'Cycle status forward' },
+      { 'S', 'Pick status' },
+      { 'p', 'Priority up' },
+      { 'P', 'Priority down' },
+      { 'c', 'Close bead' },
+      { 'o', 'Reopen bead' },
+      { 'gK', 'Claim bead' },
+      { 'C', 'Create bead' },
+      { 'dd', 'Delete bead' },
+      { 'gD', 'Defer bead' },
+      { 'gU', 'Undefer bead' },
+      { 'f', 'Filter' },
+      { 'F', 'Clear filters' },
+      { 'gs', 'Sort by field' },
+      { 'gS', 'Reverse sort' },
+      { '/', 'Text search' },
+      { 'gq', 'Query expression' },
+      { 'gC', 'Claude skills' },
+    },
+  },
+  {
+    'List (visual)',
+    {
+      { 'V+c', 'Bulk close' },
+      { 'V+dd', 'Bulk delete' },
+      { 'V+gD', 'Bulk defer' },
+      { 'V+s', 'Bulk status' },
+      { 'V+gC', 'Claude skills (multi)' },
+    },
+  },
+  {
+    'Detail',
+    {
+      { 'q / <BS>', 'Back to list' },
+      { 'R', 'Refresh' },
+      { 's / S', 'Status cycle/pick' },
+      { 'p / P', 'Priority up/down' },
+      { 'c', 'Close bead' },
+      { 'o', 'Reopen bead' },
+      { 'gK', 'Claim bead' },
+      { 'a', 'Set assignee' },
+      { 'gl', 'Add label' },
+      { 'gL', 'Remove label' },
+      { '<C-c>', 'Add comment' },
+      { 'gD', 'Defer bead' },
+      { 'gU', 'Undefer bead' },
+      { 'ed', 'Edit description' },
+      { 'eD', 'Edit design' },
+      { 'en', 'Edit notes' },
+      { 'ea', 'Edit acceptance' },
+      { 'et', 'Edit title' },
+      { 'eU', 'Edit due date' },
+      { 'eE', 'Edit estimate' },
+      { 'eI', 'Rename issue ID' },
+      { 'gP', 'Set parent' },
+      { 'gd', 'Show deps' },
+      { 'gp', 'Go to parent' },
+      { 'gc', 'Show children' },
+      { 'gG', 'Dep graph' },
+      { 'gx', 'Mark duplicate' },
+      { 'gX', 'Supersede' },
+      { 'gW', 'Promote wisp' },
+      { 'da', 'Add depends-on' },
+      { 'db', 'Add blocks' },
+      { 'dr', 'Remove dep' },
+      { 'dR', 'Relate issue' },
+      { 'dU', 'Unrelate issue' },
+      { 'gC', 'Claude skills' },
+      { 'gT', 'Jump to Claude' },
+    },
+  },
+  {
+    'Activity',
+    {
+      { '<CR>', 'Open issue' },
+      { 'R', 'Refresh' },
+      { 'a', 'Toggle auto-refresh' },
+      { 'q', 'Close buffer' },
+      { '?', 'Show help' },
+    },
+  },
+  {
+    'Graph',
+    {
+      { '<CR>', 'Open issue' },
+      { 'R', 'Refresh' },
+      { 'q', 'Close buffer' },
+      { '?', 'Show help' },
+    },
+  },
+  {
+    'Edit',
+    {
+      { ':w', 'Save changes' },
+      { 'q', 'Close (no save)' },
+    },
+  },
+  {
+    'Commands',
+    {
+      { ':Beadboard', 'Open list' },
+      { ':BdSearch <t>', 'Search beads' },
+      { ':BdQuery <e>', 'Query beads' },
+      { ':BdReady', 'Ready beads' },
+      { ':BdBlocked', 'Blocked beads' },
+      { ':BdStale [d]', 'Stale beads' },
+      { ':BdCreate', 'Create bead' },
+      { ':BdStatus', 'Dashboard' },
+      { ':BdEpicStatus', 'Epic progress' },
+      { ':BdGraph [id]', 'Dep graph' },
+      { ':BdActivity', 'Activity feed' },
+    },
+  },
 }
 
--- Line indices (0-based) that are section headers
-local header_lines = { 0, 2, 30, 38, 77, 85, 92, 97 }
-local header_set = {}
-for _, i in ipairs(header_lines) do
-  header_set[i] = true
+--- Pad or truncate string to exact display width.
+---@param str string
+---@param len number
+---@param align? "left"|"right"
+---@return string
+local function pad(str, len, align)
+  local w = vim.api.nvim_strwidth(str)
+  if w > len then
+    return vim.fn.strcharpart(str, 0, len - 1) .. '\u{2026}'
+  end
+  local space = string.rep(' ', len - w)
+  return align == 'right' and (space .. str) or (str .. space)
 end
 
--- Line indices (0-based) that are separator lines
-local sep_lines = { 3, 31, 39, 78, 86, 93, 98 }
-local sep_set = {}
-for _, i in ipairs(sep_lines) do
-  sep_set[i] = true
-end
+--- Build extmark virt_text rows from sections data.
+--- Returns list of rows, each row is a list of {text, hl_group} chunks.
+---@param width number available width
+---@return table[] rows
+local function build_rows(width)
+  local col_width = 32
+  local key_width = 14
+  local cols = math.max(1, math.floor(width / col_width))
 
-function M.open()
-  local buf = vim.api.nvim_create_buf(false, true)
-
-  vim.bo[buf].buftype = 'nofile'
-  vim.bo[buf].bufhidden = 'wipe'
-  vim.bo[buf].swapfile = false
-  vim.bo[buf].filetype = 'beadboard-help'
-
-  vim.api.nvim_buf_set_lines(buf, 0, -1, false, content)
-  vim.bo[buf].modifiable = false
-  vim.bo[buf].modified = false
-
-  vim.api.nvim_buf_clear_namespace(buf, ns, 0, -1)
-  for i = 0, #content - 1 do
-    if header_set[i] then
-      vim.api.nvim_buf_add_highlight(buf, ns, 'BeadboardHeader', i, 0, -1)
-    elseif sep_set[i] then
-      vim.api.nvim_buf_add_highlight(buf, ns, 'Comment', i, 0, -1)
+  -- Flatten all entries with section headers interleaved.
+  -- Each entry: { key, desc, is_header }
+  local flat = {}
+  for _, section in ipairs(sections) do
+    table.insert(flat, { section[1], '', true })
+    for _, binding in ipairs(section[2]) do
+      table.insert(flat, { binding[1], binding[2], false })
     end
   end
 
-  vim.api.nvim_set_current_buf(buf)
+  -- Lay out into columns, filling column-first.
+  local total = #flat
+  local rows_needed = math.ceil(total / cols)
+  local grid = {} ---@type table[][]
+  for r = 1, rows_needed do
+    grid[r] = {}
+  end
 
-  vim.keymap.set('n', 'q', function()
-    vim.api.nvim_buf_delete(buf, { force = true })
-  end, { buffer = buf, nowait = true, silent = true })
+  local idx = 1
+  for col = 1, cols do
+    for row = 1, rows_needed do
+      if idx <= total then
+        grid[row][col] = flat[idx]
+        idx = idx + 1
+      end
+    end
+  end
+
+  -- Convert grid to virt_text rows.
+  local result = {}
+  for _, row_data in ipairs(grid) do
+    local chunks = {}
+    for c, entry in ipairs(row_data) do
+      if c > 1 then
+        table.insert(chunks, { '  ', '' })
+      end
+      if entry[3] then
+        -- Section header
+        table.insert(chunks, { pad(entry[1], col_width), 'BeadboardHeader' })
+      else
+        table.insert(chunks, { pad(entry[1], key_width, 'right'), 'SnacksWinKey' })
+        table.insert(chunks, { ' ', '' })
+        table.insert(chunks, { '\u{27a4}', 'SnacksWinKeySep' })
+        table.insert(chunks, { ' ', '' })
+        table.insert(chunks, {
+          pad(entry[2], col_width - key_width - 3),
+          'SnacksWinKeyDesc',
+        })
+      end
+    end
+    table.insert(result, chunks)
+  end
+  return result
 end
+
+--- Close any existing beadboard help float on the current tab.
+---@return boolean true if a help window was found and closed
+local function close_existing()
+  for _, win in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
+    if vim.api.nvim_win_is_valid(win) then
+      local buf = vim.api.nvim_win_get_buf(win)
+      if vim.bo[buf].filetype == filetype then
+        vim.api.nvim_win_close(win, true)
+        return true
+      end
+    end
+  end
+  return false
+end
+
+--- Open help as Snacks.win float anchored to bottom.
+---@param source_buf number the buffer that triggered help
+local function open_snacks(source_buf)
+  local Snacks = require('snacks')
+  local win = Snacks.win({
+    show = false,
+    focusable = false,
+    position = 'float',
+    backdrop = false,
+    border = 'top',
+    row = -1,
+    width = 0,
+    height = 0.4,
+    zindex = 51,
+    bo = { filetype = filetype },
+  })
+
+  local dim = win:dim()
+  local rows = build_rows(dim.width)
+  win.opts.height = #rows
+  win:show()
+
+  for i, chunks in ipairs(rows) do
+    vim.api.nvim_buf_set_lines(win.buf, i - 1, i, false, { '' })
+    vim.api.nvim_buf_set_extmark(win.buf, ns, i - 1, 0, {
+      virt_text = chunks,
+      virt_text_pos = 'overlay',
+    })
+  end
+
+  -- Auto-close when source buffer is wiped or its window closes.
+  local augroup = vim.api.nvim_create_augroup(
+    'beadboard_help_' .. source_buf,
+    { clear = true }
+  )
+  vim.api.nvim_create_autocmd('BufWipeout', {
+    group = augroup,
+    buffer = source_buf,
+    once = true,
+    callback = function()
+      if win:valid() then win:close() end
+      pcall(vim.api.nvim_del_augroup_by_id, augroup)
+    end,
+  })
+  vim.api.nvim_create_autocmd('WinClosed', {
+    group = augroup,
+    callback = function(ev)
+      local closed_win = tonumber(ev.match)
+      if closed_win and vim.fn.winbufnr(closed_win) == source_buf then
+        if win:valid() then win:close() end
+        pcall(vim.api.nvim_del_augroup_by_id, augroup)
+      end
+    end,
+  })
+end
+
+--- Fallback: open help in a plain nvim_open_win float.
+---@param source_buf number the buffer that triggered help
+local function open_fallback(source_buf)
+  local buf = vim.api.nvim_create_buf(false, true)
+  vim.bo[buf].buftype = 'nofile'
+  vim.bo[buf].bufhidden = 'wipe'
+  vim.bo[buf].swapfile = false
+  vim.bo[buf].filetype = filetype
+
+  local rows = build_rows(vim.o.columns)
+  local lines = {}
+  for _ = 1, #rows do
+    table.insert(lines, '')
+  end
+  vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
+
+  for i, chunks in ipairs(rows) do
+    vim.api.nvim_buf_set_extmark(buf, ns, i - 1, 0, {
+      virt_text = chunks,
+      virt_text_pos = 'overlay',
+    })
+  end
+
+  vim.bo[buf].modifiable = false
+
+  local win = vim.api.nvim_open_win(buf, false, {
+    relative = 'editor',
+    row = vim.o.lines - #rows - 2,
+    col = 0,
+    width = vim.o.columns,
+    height = #rows,
+    style = 'minimal',
+    border = { '\u{2500}', '\u{2500}', '\u{2500}', '', '', '', '', '' },
+    focusable = false,
+    zindex = 51,
+  })
+  vim.wo[win].winhighlight = 'Normal:NormalFloat'
+
+  local augroup = vim.api.nvim_create_augroup(
+    'beadboard_help_' .. source_buf,
+    { clear = true }
+  )
+  vim.api.nvim_create_autocmd('BufWipeout', {
+    group = augroup,
+    buffer = source_buf,
+    once = true,
+    callback = function()
+      pcall(vim.api.nvim_win_close, win, true)
+      pcall(vim.api.nvim_del_augroup_by_id, augroup)
+    end,
+  })
+  vim.api.nvim_create_autocmd('WinClosed', {
+    group = augroup,
+    callback = function(ev)
+      local closed_win = tonumber(ev.match)
+      if closed_win and vim.fn.winbufnr(closed_win) == source_buf then
+        pcall(vim.api.nvim_win_close, win, true)
+        pcall(vim.api.nvim_del_augroup_by_id, augroup)
+      end
+    end,
+  })
+end
+
+--- Toggle help overlay. Press ? to open, press again to close.
+function M.toggle()
+  if close_existing() then
+    return
+  end
+  local source_buf = vim.api.nvim_get_current_buf()
+  if _has_snacks_win() then
+    open_snacks(source_buf)
+  else
+    open_fallback(source_buf)
+  end
+end
+
+-- Backward compat: old callers use M.open()
+M.open = M.toggle
 
 return M

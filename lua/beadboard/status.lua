@@ -214,6 +214,10 @@ function M.open()
     refresh(buf)
   end, { buffer = buf, nowait = true, silent = true, desc = 'Refresh' })
 
+  vim.keymap.set('n', '?', function()
+    require('beadboard.help').toggle()
+  end, { buffer = buf, nowait = true, silent = true, desc = 'Show help' })
+
   refresh(buf)
 end
 

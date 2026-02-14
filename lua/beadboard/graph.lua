@@ -66,8 +66,8 @@ function M.open(issue_id)
   end, vim.tbl_extend('force', opts, { desc = 'Open issue' }))
 
   vim.keymap.set('n', '?', function()
-    require('beadboard.help').open()
-  end, opts)
+    require('beadboard.help').toggle()
+  end, vim.tbl_extend('force', opts, { desc = 'Show help' }))
 
   refresh()
 end

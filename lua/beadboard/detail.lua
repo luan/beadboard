@@ -639,8 +639,8 @@ local function setup_keymaps(buf)
 
   -- Help
   vim.keymap.set('n', '?', function()
-    require('beadboard.help').open()
-  end, opts)
+    require('beadboard.help').toggle()
+  end, vim.tbl_extend('force', opts, { desc = 'Show help' }))
 end
 
 function M.refresh(buf, bead_id)
